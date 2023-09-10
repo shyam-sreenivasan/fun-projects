@@ -1,0 +1,248 @@
+<html>
+    <head>
+        <style>
+
+            .row {
+                display: flex;
+            }
+            body {
+                background-color: #eee;
+            }
+            .square {
+                width: 100px;
+                height: 100px;
+                border: 1px solid black;
+            }
+
+            #knight {
+                color: red;
+                font-weight: bold;
+                margin-top: 40px;
+            }
+        </style>
+    </head>
+    <body>
+        <center>
+            <input type="text" name="start" id="dimen" placeholder="Enter start position">
+            <button id="start">START</button>
+            <p id="alertText">Enter the dimension of chess board and click START</p>
+        </center>
+        <script>
+            var dimen = null;
+            var startButton = document.getElementById('start');
+            var knight = null;
+            var board = null;
+            var body = document.getElementsByTagName('body')[0];
+
+            function resetCanvas(parent) {
+                while (parent.firstChild) {
+                    parent.removeChild(parent.firstChild);
+                }
+            }
+            function createBoard(dimen) {
+                var board = document.getElementById('board');
+                if(board !== null && board !== undefined) {
+                    board.remove();
+                }
+                board = document.createElement('div');
+                board.setAttribute('id', 'board');
+                board.style.width = `${dimen*100} px`;
+                board.style.height = `${dimen*100} px`;
+                board.style.diplay = 'flex';
+                board.style.marginTop = '50px';
+                board.style.marginLeft = '550px';
+                document.getElementsByTagName('center')[0].appendChild(board);
+                return board;
+            }
+            function createRow(dimen) {
+                let row = document.createElement('div');
+                row.style.width = `${dimen*100} px`;
+                row.style.height = '100 px';
+                row.setAttribute('class', 'row');
+                return row;
+            }
+            function createSquare(row, col, color) {
+                var square = document.createElement('div');
+                square.style.backgroundColor = color;
+                square.setAttribute('class', 'square');
+                square.setAttribute('id', `${row}${col}`);
+                square.style.opactiy = 1;
+                var p = document.createElement('p');
+                p.innerHTML = `${row}${col}`;
+                p.style.float = 'right';
+                p.style.color = 'grey';
+                square.appendChild(p)
+                return square;
+            }
+
+            function toggleColor(color) {
+                if(color == "white") {
+                    color = "black";
+                }else {
+                    color = "white";
+                }
+                return color;
+            }
+
+            function createKnight() {
+                let knight = document.createElement('h2');
+                knight.setAttribute("id", "knight");
+                knight.innerHTML = "K";
+                return knight;
+            }
+            function getColor(row) {
+                let color = "black";
+                if(row%2 === 0) {
+                    color = "white";
+                }
+                return color;
+            }
+
+            function setKnight(pos, color) {
+                let square = document.getElementById(pos);
+                square.appendChild(knight);
+                if(color !== null) {
+                    square.style.backgroundColor = color;
+                }
+            }
+
+            function resetCounter() {
+                counter = 0;
+            }
+
+            var counter = 0;
+
+            function get2DSquares(n) {
+            const squares = [];
+            for (let i = 0; i < n; i++) {
+                const row = new Array(n).fill(false);
+                squares.push(row);
+            }
+            return squares;
+            }
+
+            function getValidNextPositions(row, col) {
+            return [
+                [row - 1, col - 2],
+                [row - 2, col - 1],
+                [row + 2, col - 1],
+                [row + 1, col - 2],
+                [row - 1, col + 2],
+                [row - 2, col + 1],
+                [row + 1, col + 2],
+                [row + 2, col + 1],
+            ];
+            }
+
+            function isValidPosition(pos, dimen) {
+                const [row, col] = pos;
+                return 0 <= row && row < dimen && 0 <= col && col < dimen;
+            }
+
+            function allSquaresVisited(squares, path) {
+                return path.length === squares.length * squares.length;
+            }
+
+            function visit(squares, rowPos, colPos, path) {
+                const pos = `${rowPos}${colPos}`;
+                path.push(pos);
+
+                squares[rowPos][colPos] = true;
+                const nextPositions = getValidNextPositions(rowPos, colPos);
+                let validPositions = nextPositions.filter((pos) =>
+                    isValidPosition(pos, squares.length)
+                );
+
+                validPositions = validPositions.filter((pos) => 
+                    !path.includes(`${pos[0]}${pos[1]}`) 
+                );
+                
+                if (allSquaresVisited(squares, path)) {
+                    console.log(`All squares visited ${path}`);
+                    return true;
+                }
+
+                for (const vp of validPositions) {
+                    const [nextRow, nextCol] = vp;
+                    const pathFound = visit(squares, nextRow, nextCol, path);
+                    if (pathFound) {
+                    return true;
+                    }
+                }
+
+                path.pop();
+                squares[rowPos][colPos] = false;
+                return false;
+            }
+            function setAlertText(content) {
+                var alertText = document.getElementById('alertText');
+                alertText.innerHTML = content;
+            }
+
+            function findKnightTours(dimen) {
+                for (let i = 0; i < dimen; i++) {
+                    for (let j = 0; j < dimen; j++) {
+                    const path = new Array();
+                    const squares = get2DSquares(dimen);
+                    const pathFound = visit(squares, i, j, path);
+                    if (pathFound) {
+                        setAlertText('Path exists from ' + path[0]);
+                        return path;
+                    }
+                  }
+                }
+                setAlertText("No path found from any position");
+            }
+
+            startButton.onclick = function() {
+                
+                startButton.disable = true;
+                var dimen = document.getElementById('dimen').value;
+                try{
+                    dimen = parseInt(dimen);
+                    if(dimen < 2  || dimen > 8){
+                        alert("Please enter value between 3 and 8");
+                        return;
+                    }
+                }catch(e) {
+                    alert("Please enter a valid chess board dimension");
+                    return;
+                }
+                board = createBoard(dimen);
+                var squareColor = "white";
+                var setPositionButton = document.getElementById('setPosition');
+                var position = null;
+                knight = createKnight();
+
+                for(let i=0;i<dimen;i++) {
+                    let row = createRow(dimen);
+                    squareColor = getColor(i);
+                    for(let j=0;j<dimen;j++) {
+                        square = createSquare(i, j, squareColor);
+                        row.appendChild(square);
+                        squareColor = toggleColor(squareColor);
+                    }
+                    board.appendChild(row);
+                }
+
+                const chessboard = get2DSquares(dimen);
+                const startingRow = 0;
+                const startingCol = 0;
+                var tours = findKnightTours(dimen);
+                if(tours !== null && tours !== undefined){
+                    inter = setInterval(function() {
+                    setKnight(tours[counter], 'turquoise');
+                    counter = counter + 1;
+                    if(counter >= tours.length) {
+                        resetCounter();
+                        clearInterval(inter);
+                        return
+                    }
+                }, 500)
+              }
+            }
+            
+
+        </script>
+    </body>
+</html>
