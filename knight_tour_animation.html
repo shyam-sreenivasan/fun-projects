@@ -203,16 +203,10 @@
                     clearInterval(inter);
                 }
                 var dimen = document.getElementById('dimen').value;
-                try{
-                    dimen = parseInt(dimen);
-                    console.log(dimen);
-                    if(dimen < 3  || dimen > 8){
-                        alert("Please enter value between 3 and 8");
-                        return; 
-                    }
-                }catch(e) {
-                    alert("Please enter a valid chess board dimension");
-                    return;
+                dimen = parseInt(dimen);
+                if(isNaN(dimen) || dimen < 3  || dimen > 8){
+                    alert("Please enter value between 3 and 8");
+                    return; 
                 }
                 board = createBoard(dimen);
                 var squareColor = "white";
