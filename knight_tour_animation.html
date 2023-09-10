@@ -19,6 +19,7 @@
                 font-weight: bold;
                 margin-top: 40px;
             }
+
             #alertText {
                 font-size: 2rem;
             }
@@ -36,6 +37,7 @@
             var knight = null;
             var board = null;
             var body = document.getElementsByTagName('body')[0];
+            var inter = null;
 
             function resetCanvas(parent) {
                 while (parent.firstChild) {
@@ -69,7 +71,6 @@
                 square.style.backgroundColor = color;
                 square.setAttribute('class', 'square');
                 square.setAttribute('id', `${row}${col}`);
-                square.style.opactiy = 1;
                 var p = document.createElement('p');
                 p.innerHTML = `${row}${col}`;
                 p.style.float = 'right';
@@ -198,14 +199,16 @@
             }
 
             startButton.onclick = function() {
-                
-                startButton.disable = true;
+                if(inter !== null) {
+                    clearInterval(inter);
+                }
                 var dimen = document.getElementById('dimen').value;
                 try{
                     dimen = parseInt(dimen);
-                    if(dimen < 2  || dimen > 8){
+                    console.log(dimen);
+                    if(dimen < 3  || dimen > 8){
                         alert("Please enter value between 3 and 8");
-                        return;
+                        return; 
                     }
                 }catch(e) {
                     alert("Please enter a valid chess board dimension");
