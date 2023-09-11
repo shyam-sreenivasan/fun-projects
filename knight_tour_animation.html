@@ -38,27 +38,47 @@
             var board = null;
             var body = document.getElementsByTagName('body')[0];
             var inter = null;
+            var squareColor = "white";
+            var setPositionButton = document.getElementById('setPosition');
+            var tours = null;
+            var counter = 0;
 
-            function resetCanvas(parent) {
-                while (parent.firstChild) {
-                    parent.removeChild(parent.firstChild);
-                }
-            }
-            function createBoard(dimen) {
-                var board = document.getElementById('board');
-                if(board !== null && board !== undefined) {
-                    board.remove();
-                }
-                board = document.createElement('div');
+            function styleBoard(board, dimen) {
                 board.setAttribute('id', 'board');
                 board.style.width = `${dimen*100} px`;
                 board.style.height = `${dimen*100} px`;
                 board.style.diplay = 'flex';
                 board.style.marginTop = '50px';
                 board.style.marginLeft = '550px';
+                return board;
+            }
+
+            function buildSquaresOnBoard(board, dimen) {
+                for(let i=0;i<dimen;i++) {
+                    let row = createRow(dimen);
+                    squareColor = getColor(i);
+                    for(let j=0;j<dimen;j++) {
+                        square = createSquare(i, j, squareColor);
+                        row.appendChild(square);
+                        squareColor = toggleColor(squareColor);
+                    }
+                    board.appendChild(row);
+                }
+                return board;
+            }
+
+            function createBoard(dimen) {
+                var board = document.getElementById('board');
+                if(board !== null && board !== undefined) {
+                    board.remove();
+                }
+                board = document.createElement('div');
+                board = styleBoard(board, dimen);
+                board = buildSquaresOnBoard(board, dimen);
                 document.getElementsByTagName('center')[0].appendChild(board);
                 return board;
             }
+
             function createRow(dimen) {
                 let row = document.createElement('div');
                 row.style.width = `${dimen*100} px`;
@@ -66,12 +86,23 @@
                 row.setAttribute('class', 'row');
                 return row;
             }
-            function createSquare(row, col, color) {
-                var square = document.createElement('div');
+            function createPathNumber(number) {
+                let h3 = document.createElement('h3');
+                h3.setAttribute('class', 'squareNumber');
+                h3.style.position = "center";
+                h3.innerHTML = number;
+                h3.style.color = 'grey';
+                h3.style.marginTop = "40px";
+                h3.style.marginLeft = "20px";
+                return h3;
+            }
+
+            function createSquare(row, col, color, dimen) {
+                let square = document.createElement('div');
                 square.style.backgroundColor = color;
                 square.setAttribute('class', 'square');
                 square.setAttribute('id', `${row}${col}`);
-                var p = document.createElement('p');
+                let p = document.createElement('p');
                 p.innerHTML = `${row}${col}`;
                 p.style.float = 'right';
                 p.style.color = 'grey';
@@ -102,19 +133,14 @@
                 return color;
             }
 
-            function setKnight(pos, color) {
-                let square = document.getElementById(pos);
+            function setKnightToSquare(knight, square) {
                 square.appendChild(knight);
-                if(color !== null) {
-                    square.style.backgroundColor = color;
-                }
+                square.style.backgroundColor = '#EAB2F4';
             }
 
             function resetCounter() {
                 counter = 0;
             }
-
-            var counter = 0;
 
             function get2DSquares(n) {
             const squares = [];
@@ -162,7 +188,6 @@
                 );
                 
                 if (allSquaresVisited(squares, path)) {
-                    console.log(`All squares visited ${path}`);
                     return true;
                 }
 
@@ -197,6 +222,11 @@
                 }
                 setAlertText("No path found from any position");
             }
+            
+            function setPathNumber(square, number) {
+                let h3 = createPathNumber(number);
+                square.appendChild(h3);
+            }
 
             startButton.onclick = function() {
                 if(inter !== null) {
@@ -208,38 +238,23 @@
                     alert("Please enter value between 3 and 8");
                     return; 
                 }
+
                 board = createBoard(dimen);
-                var squareColor = "white";
-                var setPositionButton = document.getElementById('setPosition');
-                var position = null;
                 knight = createKnight();
-
-                for(let i=0;i<dimen;i++) {
-                    let row = createRow(dimen);
-                    squareColor = getColor(i);
-                    for(let j=0;j<dimen;j++) {
-                        square = createSquare(i, j, squareColor);
-                        row.appendChild(square);
-                        squareColor = toggleColor(squareColor);
-                    }
-                    board.appendChild(row);
-                }
-
-                const chessboard = get2DSquares(dimen);
-                const startingRow = 0;
-                const startingCol = 0;
-                var tours = findKnightTours(dimen);
+                tours = findKnightTours(dimen);
                 if(tours !== null && tours !== undefined){
                     inter = setInterval(function() {
-                    setKnight(tours[counter], 'turquoise');
-                    counter = counter + 1;
-                    if(counter >= tours.length) {
-                        resetCounter();
-                        clearInterval(inter);
-                        return
-                    }
-                }, 500)
-              }
+                        let square = document.getElementById(tours[counter]);
+                        setKnightToSquare(knight, square);
+                        setPathNumber(square, counter);
+                        counter = counter + 1;
+                        if(counter >= tours.length) {
+                            resetCounter();
+                            clearInterval(inter);
+                            return
+                        }
+                    }, 500)
+                }
             }
             
 
