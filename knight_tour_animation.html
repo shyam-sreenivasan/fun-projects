@@ -42,6 +42,19 @@
             var setPositionButton = document.getElementById('setPosition');
             var tours = null;
             var counter = 0;
+            let path_found = false;
+
+            const DIRECTIONS = [
+                [-1, 2],
+                [-1, -2],
+                [-2, 1],
+                [-2, -1],
+                [1, 2],
+                [1, -2],
+                [2, 1],
+                [2, -1]
+            ];
+
 
             function styleBoard(board, dimen) {
                 board.setAttribute('id', 'board');
@@ -143,66 +156,42 @@
             }
 
             function get2DSquares(n) {
-            const squares = [];
-            for (let i = 0; i < n; i++) {
-                const row = new Array(n).fill(false);
-                squares.push(row);
-            }
-            return squares;
-            }
-
-            function getValidNextPositions(row, col) {
-            return [
-                [row - 1, col - 2],
-                [row - 2, col - 1],
-                [row + 2, col - 1],
-                [row + 1, col - 2],
-                [row - 1, col + 2],
-                [row - 2, col + 1],
-                [row + 1, col + 2],
-                [row + 2, col + 1],
-            ];
+                const squares = [];
+                for (let i = 0; i < n; i++) {
+                    const row = new Array(n).fill(false);
+                    squares.push(row);
+                }
+                return squares;
             }
 
-            function isValidPosition(pos, dimen) {
-                const [row, col] = pos;
-                return 0 <= row && row < dimen && 0 <= col && col < dimen;
+            function isValidPosition(row, col, squares) {
+                let dimen = squares.length;
+                return (row >= 0 && row < dimen) && (col >= 0 && col < dimen) && !squares[row][col];
             }
 
-            function allSquaresVisited(squares, path) {
-                return path.length === squares.length * squares.length;
-            }
-
-            function visit(squares, rowPos, colPos, path) {
-                const pos = `${rowPos}${colPos}`;
-                path.push(pos);
-
+            function visit(squares, rowPos, colPos, depth = 1) {
                 squares[rowPos][colPos] = true;
-                const nextPositions = getValidNextPositions(rowPos, colPos);
-                let validPositions = nextPositions.filter((pos) =>
-                    isValidPosition(pos, squares.length)
-                );
+                const pos = `${rowPos}${colPos}`;
 
-                validPositions = validPositions.filter((pos) => 
-                    !path.includes(`${pos[0]}${pos[1]}`) 
-                );
-                
-                if (allSquaresVisited(squares, path)) {
-                    return true;
+                if (depth === squares.length * squares.length) {
+                    return [true, [pos]];
                 }
 
-                for (const vp of validPositions) {
-                    const [nextRow, nextCol] = vp;
-                    const pathFound = visit(squares, nextRow, nextCol, path);
-                    if (pathFound) {
-                    return true;
+                for (const [dr, dc] of DIRECTIONS) {
+                    const nextRow = rowPos + dr;
+                    const nextCol = colPos + dc;
+                    if (isValidPosition(nextRow, nextCol, squares)) {
+                        const [pathFound, pth] = visit(squares, nextRow, nextCol, depth + 1);
+                        if (pathFound) {
+                            return [true, [pos, ...pth]];
+                        }
                     }
                 }
 
-                path.pop();
                 squares[rowPos][colPos] = false;
-                return false;
+                return [false, null];
             }
+
             function setAlertText(content) {
                 var alertText = document.getElementById('alertText');
                 alertText.innerHTML = content;
@@ -211,15 +200,15 @@
             function findKnightTours(dimen) {
                 for (let i = 0; i < dimen; i++) {
                     for (let j = 0; j < dimen; j++) {
-                    const path = new Array();
+                    // const path = new Array();
                     const squares = get2DSquares(dimen);
-                    const pathFound = visit(squares, i, j, path);
+                    const [pathFound, path] = visit(squares, i, j);
                     if (pathFound) {
-                        setAlertText('Path exists from ' + path[0]);
-                        return path;
+                        return [pathFound, path];
                     }
                   }
                 }
+                return [false, null];
                 setAlertText("No path found from any position");
             }
             
@@ -241,8 +230,9 @@
 
                 board = createBoard(dimen);
                 knight = createKnight();
-                tours = findKnightTours(dimen);
-                if(tours !== null && tours !== undefined){
+                [path_found, tours] = findKnightTours(dimen);
+                if(path_found){
+                    setAlertText('Path exists from ' + tours[0]);
                     inter = setInterval(function() {
                         let square = document.getElementById(tours[counter]);
                         setKnightToSquare(knight, square);
@@ -254,6 +244,8 @@
                             return
                         }
                     }, 500)
+                }else {
+                    setAlertText('No path found from any position');
                 }
             }
             
