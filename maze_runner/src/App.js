@@ -3,6 +3,7 @@ import './App.css';
 import Maze from './Maze';
 import { MAZES, TOURS, baseHeight, baseWidth} from './Constants';
 import { useState, useEffect } from 'react';
+import ANIMALIMAGE from './images/animal.png';
 
 function App() {
   const [mazeCounter, setMazeCounter] = useState(0);
@@ -70,7 +71,12 @@ function App() {
   }
   return (
     <>
-      <h2 id="header">The Ultimate Maze Test</h2>
+      <div id="header">
+        <h2>The Ultimate Maze Test</h2>
+        <div id="subheader">
+          <h3>Can the polar bear Ace the Maze</h3>
+        </div>
+      </div>
       {getGameState()}
     </>
     

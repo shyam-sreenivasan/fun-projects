@@ -17,6 +17,13 @@ body {
   justify-content: center;
 }
 
+#subheader {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 
 .box {
   background-color: #f1f1f1;
@@ -42,12 +49,20 @@ body {
   font-weight: bold;
 }
 
-#header, p, h3 {
+#header, #subheader {
+  width: auto;
+  justify-content: center;
+  line-height: 3px;
+}
+
+h2, p, h3 {
   text-align: center;
   color: white;
   font-style: italic;
 }
-
+h3 {
+  font-size: 80%;
+}
 p {
   font-size: 120%;
 }
@@ -80,7 +95,7 @@ button:disabled {
   cursor:not-allowed;
 }
 
-.boxcontent #animalImage {
+.boxcontent .animalImage {
   max-width: 50%;
   height: auto;
   border-radius: 50%;
