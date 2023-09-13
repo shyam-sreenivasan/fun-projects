@@ -9,7 +9,7 @@ function Box({width, height, pos, value}) {
   
   function getBoxContent(value) {
     if(value === ANIMAL) {
-        return <img class="animalImage" src={ANIMALIMAGE}  alt={value}/>;
+        return <img className="animalImage" src={ANIMALIMAGE}  alt={value}/>;
     }
     return value;
   }

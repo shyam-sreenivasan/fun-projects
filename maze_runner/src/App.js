@@ -1,9 +1,8 @@
 import logo from './logo.svg';
 import './App.css';
 import Maze from './Maze';
-import { MAZES, TOURS, baseHeight, baseWidth} from './Constants';
+import { MAZES, baseHeight, baseWidth} from './Constants';
 import { useState, useEffect } from 'react';
-import ANIMALIMAGE from './images/animal.png';
 
 function App() {
   const [mazeCounter, setMazeCounter] = useState(0);
@@ -13,7 +12,6 @@ function App() {
   const [matrix, setMatrix] = useState(MAZES[0].matrix);
   const [mazeWidth, setMazeWidth] = useState(MAZES[0].columns*baseWidth);
   const [mazeHeight, setMazeHeight] = useState(MAZES[0].rows*baseHeight);
-  const [tour, setTour] = useState(TOURS[0]);
   const [isGameOver, setGameOver] = useState(false);
   const [restartButtonDisabled, setRestartButtonDisabled] = useState(true);
   const [message, setMessage] = useState("");
@@ -25,13 +23,11 @@ function App() {
   useEffect(() => {
     if(mazeCounter >= 0 && mazeCounter < MAZES.length) {
       let maze = MAZES[mazeCounter];
-      let curr_tour = TOURS[mazeCounter];
       setRows(maze.rows);
       setColumns(maze.columns);
       setMazeHeight(maze.rows*baseHeight);
       setMazeWidth(maze.columns*baseWidth);
       setMatrix(maze.matrix);
-      setTour(curr_tour);
     } else {
       setGameOver(true);
       setRestartButtonDisabled(false);
@@ -48,7 +44,7 @@ function App() {
     setNextButtonDisabled(disabled);
   }
 
-  const maze = <Maze rows={rows} columns={columns} matrix={matrix} width={mazeWidth} height={mazeHeight} tour={tour} nextButtonStateHandler={handleNextButtonClickForStartButtonState} key="maze" handleMessage={handleMessage} />;
+  const maze = <Maze rows={rows} columns={columns} matrix={matrix} width={mazeWidth} height={mazeHeight} nextButtonStateHandler={handleNextButtonClickForStartButtonState} key="maze" handleMessage={handleMessage} />;
 
   const handleRestartButton = () => {
     setGameOver(false);
