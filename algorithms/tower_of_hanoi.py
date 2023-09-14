@@ -1,3 +1,7 @@
+import sys
+
+sys.setrecursionlimit(100000)
+
 class Stack:
     def __init__(self,name, ls) -> None:
         self.name = name
@@ -36,16 +40,17 @@ In every step, there are 2 options.
     - move to the next stack
 
 """
-def solve(stacks, req_len, last_stack, curr_pointer=0, visited_states=[], depth=0):
+def solve(stacks, req_len, last_stack, curr_pointer=0, memo={}, visited_states=[], depth=0):
     curr_stack = stacks[curr_pointer]
     all_state = "".join([s.get_state() for s in stacks]) + f"-{curr_pointer}"
     if(last_stack.is_valid() and last_stack.length() == req_len):
         return True, [all_state]
     
-    if all_state in visited_states:
-        return None, None
-
-    if not curr_stack.is_valid():
+    if all_state in memo:
+        return memo[all_state]
+    
+    if all_state in visited_states or not curr_stack.is_valid():
+        memo[all_state] = (None, None)
         return None, None
     
     visited_states.append(all_state)
@@ -90,18 +95,19 @@ def solve(stacks, req_len, last_stack, curr_pointer=0, visited_states=[], depth=
     if min_sub:
         min_sub = [all_state] + min_sub  
     visited_states.pop() 
-    return at_least_one_true, min_sub
+    memo[all_state] = (at_least_one_true, min_sub)
+    return memo[all_state]
 
     # just move
 if __name__ == '__main__':
     stacks = [
-    Stack("A", [1,2,3]),
+    Stack("A", [1,2,3,4,5,6,7]),
     Stack("B", []),
     Stack("C", [])
 ]
     dest_stack = stacks[len(stacks) - 1]
     req_len = stacks[0].length()
-    res, all_states = solve(stacks, req_len, dest_stack)
+    res, all_states = solve(stacks, req_len, dest_stack, memo={})
     states = []
     for s in all_states:
         sparts = s.split("-")

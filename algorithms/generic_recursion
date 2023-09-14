@@ -1,0 +1,23 @@
+Recursion idea
+    - intialise a function with inputs
+    - identify the target state and check and return True
+    - perform action in the current level
+        - identifying neighbours
+        - setting variables, etc
+    - call the function recursively with new inputs
+        - these are the slaves to whom the work is delegated
+    - collect results from the slaves and return it
+        - for greedy algorithm, return the first True result
+            - you can use a visited array to prevent re-visiting the same states
+            - dont remove any states after adding
+        - for optimised result, collect all the results of the slaves and return only the best result (min weight, shortest subpaths,  etc). 
+            - can you visited array to prevent re-visiting the same states
+            - remove the current state from the array on function return. (this is to allow control to reach the current state from a different better route).
+
+use memoization to optimise to store results in each state for reuse
+
+
+
+
+    
+
