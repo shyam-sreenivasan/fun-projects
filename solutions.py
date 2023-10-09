@@ -12,6 +12,75 @@ def can_contruct_from_vocabulary(word, vocabs, stripped_word):
     
     return False
 
+# leetcode contest 366, problem 2
+# this solution is good only for 2 processors, need to extend for N processors and then optimize it.
+def min_processing_time(processors_time, tasks):
+    processors_time = sorted(processors_time)
+    def minimum_processing_time(processors_time, tasks, index=0, task_group_one=[], task_group_two=[]):
+        # create 2 groups where in one group you add a task and in the other you dont and recursively do it.
+        group_size = len(tasks) // len(processors_time)
+        group_one_size = len(task_group_one)
+        group_two_size = len(task_group_two)
+        if group_one_size == group_size and group_two_size == group_size:
+            group_one_max = max(task_group_one)
+            group_two_max = max(task_group_two)
+
+            group_one_max_with_pr1 = group_one_max + processors_time[0]
+            group_two_max_with_pr2 = group_two_max + processors_time[1]
+
+            res1 = max(group_one_max_with_pr1, group_two_max_with_pr2)
+
+            group_one_max_with_pr2 = group_one_max + processors_time[1]
+            group_two_max_with_pr1 = group_two_max + processors_time[0]
+
+            res2 = max(group_one_max_with_pr2, group_two_max_with_pr1)
+
+            # if task_group_two == [8, 7, 4, 5] or task_group_one == [8, 7, 4, 5]:
+            #     print(task_group_one, task_group_two)
+            #     print(group_one_max, group_two_max)
+            #     print(group_one_max_with_pr1, group_two_max_with_pr2)
+            #     print(group_one_max_with_pr2, group_two_max_with_pr1)
+            #     print(res1, res2)
+
+
+            return min(res1, res2)        
+        
+        if index >= len(tasks):
+            return
+        
+        # add current element either to group one or group two
+        res1 = None
+        if len(task_group_two) < group_size:
+            task_group_one.append(tasks[index])
+            res1 = minimum_processing_time(processors_time, tasks, index=index+1, task_group_one=task_group_one, task_group_two=task_group_two)
+            task_group_one.pop()
+
+        res2 = None
+        if len(task_group_two) < group_size:
+            task_group_two.append(tasks[index])
+            res2 = minimum_processing_time(processors_time, tasks, index=index+1, task_group_one=task_group_one, task_group_two=task_group_two)
+            task_group_two.pop()
+
+        if res1 and res2:
+            return min(res1, res2)
+        
+        if res1 or res2:
+            return res1 or res2
+        
+        return None
+    
+    ret = minimum_processing_time(processors_time, tasks)
+    return ret
+# leetcode contest 366, problem 1
+# given 2 integers n and m, find num1 - num2, where num1 is all elements not divisble by m and 
+# num2 is all numbers divisible by m, in the range 1...n
+def divisible_nondivisible_sum_diff(n, m):
+    sum_till_n = n*(n+1) // 2
+    num2 = sum(i for i in range(1, n+1) if i % m == 0)
+    num1 = sum_till_n - num2
+    return num1 - num2
+
+
 def split_string_iterative(s, total_spaces):
     q = [
         (s[0], 0)
@@ -192,16 +261,16 @@ if __name__ == "__main__":
             "name": "grid_traveller_iterative",
             "run": False,
             "tests": [
-                # {
-                #     "ar": (2,2),
+                {
+                    "ar": (2,2),
                     
-                # },
-                # {
-                #     "ar": (2,3)
-                # },
-                # {
-                #     "ar": (3,3)``
-                # },
+                },
+                {
+                    "ar": (2,3)
+                },
+                {
+                    "ar": (3,3),
+                },
                 {
                     "ar": (3,4)
                 }
@@ -212,15 +281,15 @@ if __name__ == "__main__":
             "name": "grid_traveller_recursive",
             "run": False,
             "tests": [
-                # {
-                #     "ar": (2,2),
-                # },
-                # {
-                #     "ar": (2,3)
-                # },
-                # {
-                #     "ar": (3,3)
-                # },
+                {
+                    "ar": (2,2),
+                },
+                {
+                    "ar": (2,3)
+                },
+                {
+                    "ar": (3,3)
+                },
                 {
                     "ar": (3,4)
                 }
@@ -254,7 +323,7 @@ if __name__ == "__main__":
         },
         {
             "name": "can_contruct_from_vocabulary",
-            "run": True,
+            "run": False,
             "tests": [
                 {
                     "kw": {
@@ -278,6 +347,33 @@ if __name__ == "__main__":
                     }
                 }
             ]
+        },
+        {
+            "name": "divisible_nondivisible_sum_diff",
+            "run": False,
+            "tests": [
+                {
+                    "ar": (10,3)
+                },
+                {
+                    "ar": (5,6)
+                },
+                {
+                    "ar": (5,1)
+                }
+            ]
+        },
+        {
+            "name": "min_processing_time",
+            "run": True,
+            "tests": [
+                {
+                    "ar": ([8,10], [2,2,3,1,8,7,4,5])
+                },
+                {
+                    "ar": ([10,20], [2,3,1,2,5,8,4,3])
+                }
+            ]
         }
 
     ]
@@ -299,9 +395,10 @@ if __name__ == "__main__":
             t = f['tests'][i]
             if t.get('skip'):
                 continue
-            print(f"Test case: {t}")
+            print(f">> \nTest case: {t}")
             ret_val = func(*t.get('ar',[]), **t.get("kw", {}))
-            print(f"Function returned.")
-            print(f.get("res_msg", ""), ret_val)
+            print("-------------------------------------------")
+            print(f"Function returned: ", f.get("res_msg", ""), ret_val)
+            print("-------------------------------------------")
             print(f"TEST CASE {i} completed for {f['name']}()")
         print("===========================")
