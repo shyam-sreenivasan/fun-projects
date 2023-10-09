@@ -119,8 +119,6 @@ def split_string_with_binary_patterns(s, total_spaces):
                 gen_strings.append(gen_string)
     return gen_strings
 
-
-
 def split_string_iterative(s, total_spaces):
     q = [
         (s[0], 0)
