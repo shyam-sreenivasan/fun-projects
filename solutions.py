@@ -1,4 +1,51 @@
 
+# given an array whose length is always even, split them into all combinations of two groups.
+def two_groups(arr, group_size, index=0, group_one=[], group_two=[]):
+    if len(group_one) == group_size and len(group_two) == group_size:
+        print(group_one, group_two)
+        return
+    
+    if index >= len(arr):
+        return
+    
+    if len(group_one) < group_size:
+        group_one.append(arr[index])
+        two_groups(arr, index=index+1, group_one=group_one, group_two=group_two, group_size=group_size)
+        group_one.pop()
+
+    if len(group_two) < group_size:
+        group_two.append(arr[index])
+        two_groups(arr, index=index+1, group_one=group_one, group_two=group_two, group_size=group_size)
+        group_two.pop()
+
+def equals(a, b):
+    if a is not None and b is not None:
+        return a if len(a) == len(b) else None
+    return None
+
+from functools import reduce
+def n_groups(arr, n):
+    def n_groups_inner(arr, n, group_size, index=0, groups=[]):
+        res = reduce(equals, groups)
+        if res is not None and len(res) == group_size:
+            print(groups)
+            return
+        
+        if index >= len(arr):
+            return
+        
+        for group in groups:
+            if len(group) < group_size:
+                group.append(arr[index])
+                n_groups_inner(arr, n, group_size, index=index+1, groups=groups)
+                group.pop()
+
+    groups = []
+    for i in range(n):
+        groups.append([])
+    n_groups_inner(arr, n, len(arr)/n, index=0, groups=groups)
+
+
 def can_contruct_from_vocabulary(word, vocabs, stripped_word):
     if stripped_word == "":
         return True
@@ -388,7 +435,7 @@ if __name__ == "__main__":
         },
         {
             "name": "divisible_nondivisible_sum_diff",
-            "run": False,
+            "run": True,
             "tests": [
                 {
                     "ar": (10,3)
@@ -419,6 +466,27 @@ if __name__ == "__main__":
             "tests": [
                 {
                     "ar": ("123", 1)
+                }
+            ]
+        },
+        {
+            "name": "two_groups",
+            "run": False,
+            "tests": [
+                {
+                    "ar": ([1,2,3,4], 2)
+                }
+            ]
+        },
+        {
+            "name": "n_groups",
+            "run": True,
+            "tests": [
+                {
+                    "ar": ([1,2,3,4], 2)
+                },
+                {
+                    "ar": ([1,2,3,4,5,6], 3)
                 }
             ]
         }
