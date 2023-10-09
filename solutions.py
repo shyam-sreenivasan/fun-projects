@@ -12,6 +12,16 @@ def can_contruct_from_vocabulary(word, vocabs, stripped_word):
     
     return False
 
+def min_processing_timen(processing_times, tasks):
+    group_size = len(tasks) // len(processing_times)
+    # the idea is to get the combination of every group with every processor and finally
+    # get the one with the minimum time across, (max of any one processor group).
+    # meaning that it will at least take that much time, but overall considering other arrangements
+    # its fastest.
+
+    def minimum_processing_time(processing_times, tasks, group_size, index=0, task_groups=[]):
+        pass
+
 # leetcode contest 366, problem 2
 # this solution is good only for 2 processors, need to extend for N processors and then optimize it.
 def min_processing_time(processors_time, tasks):
@@ -79,6 +89,36 @@ def divisible_nondivisible_sum_diff(n, m):
     num2 = sum(i for i in range(1, n+1) if i % m == 0)
     num1 = sum_till_n - num2
     return num1 - num2
+
+def split_string_with_binary_patterns(s, total_spaces):
+    def has_ones_equal_to(bstring, total_spaces):
+        count = 0
+        for i in bstring:
+            if count > total_spaces:
+                return False
+            if i == "1":
+                count += 1
+
+        return count == total_spaces
+    
+    max_spaces = len(s) - 1
+    total_combinations = 2**max_spaces
+    patterns = []
+    for i in range(total_combinations):
+        pattern = str(bin(i))[2:]
+        pattern = "0"*(len(s) - len(pattern)) + pattern
+        if has_ones_equal_to(pattern, total_spaces):
+            patterns.append(pattern)
+    
+    gen_strings = []
+    for pat in patterns:
+        gen_string = s
+        for i, c in enumerate(pat):
+            if c == "1":
+                gen_string = gen_string[:i] + " " + gen_string[i:]
+                gen_strings.append(gen_string)
+    return gen_strings
+
 
 
 def split_string_iterative(s, total_spaces):
@@ -365,13 +405,22 @@ if __name__ == "__main__":
         },
         {
             "name": "min_processing_time",
-            "run": True,
+            "run": False,
             "tests": [
                 {
                     "ar": ([8,10], [2,2,3,1,8,7,4,5])
                 },
                 {
                     "ar": ([10,20], [2,3,1,2,5,8,4,3])
+                }
+            ]
+        },
+        {
+            "name": "split_string_with_binary_patterns",
+            "run": True,
+            "tests": [
+                {
+                    "ar": ("123", 1)
                 }
             ]
         }
