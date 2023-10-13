@@ -10,7 +10,7 @@ def island(arr):
     rows = len(arr)
     columns = len(arr[0])
 
-    def find(arr, rows, columns, curr_row, curr_col, visited):
+    def find(arr, rows, columns, curr_row, curr_col, visited, lands):
         if curr_row < 0 or curr_row >= rows or curr_col < 0 or curr_col >= columns:
             # gone outside the matrix
             return 0 
@@ -22,22 +22,25 @@ def island(arr):
         if int(arr[curr_row][curr_col]) == 0:
             return 0
         # go right
-        right = find(arr, rows, columns, curr_row, curr_col+1, visited)
-        left = find(arr, rows, columns, curr_row, curr_col-1, visited)
+        right = find(arr, rows, columns, curr_row, curr_col+1, visited, lands)
+        left = find(arr, rows, columns, curr_row, curr_col-1, visited, lands)
         # go down
-        up = find(arr, rows, columns, curr_row-1, curr_col, visited)
-        down = find(arr, rows, columns, curr_row+1, curr_col, visited)
+        up = find(arr, rows, columns, curr_row-1, curr_col, visited, lands)
+        down = find(arr, rows, columns, curr_row+1, curr_col, visited, lands)
+        lands.append((curr_row, curr_col))
         return left + right + up + down + 1
     
     count = 0
-    total_visited = 0
+    islands_collection = []
     for i in range(rows):
         for j in range(columns):
+            lands = []
             if int(arr[i][j]) != 0 and (i,j) not in visited:
-                find(arr, rows, columns, i, j, visited=visited)
+                find(arr, rows, columns, i, j, visited=visited, lands=lands)
                 count += 1
+                islands_collection.append(lands)
         
-    return count
+    return count, islands_collection
         
 
 # given an array whose length is always even, split them into all combinations of two groups.
