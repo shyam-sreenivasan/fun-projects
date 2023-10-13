@@ -1,4 +1,45 @@
 
+from functools import reduce
+def equals(a, b):
+    if a is not None and b is not None:
+        return a if len(a) == len(b) else None
+    return None
+
+def island(arr):
+    visited = {}
+    rows = len(arr)
+    columns = len(arr[0])
+
+    def find(arr, rows, columns, curr_row, curr_col, visited):
+        if curr_row < 0 or curr_row >= rows or curr_col < 0 or curr_col >= columns:
+            # gone outside the matrix
+            return 0 
+        
+        if (curr_row, curr_col) in visited:
+            return 0
+                
+        visited[(curr_row, curr_col)] = 1
+        if int(arr[curr_row][curr_col]) == 0:
+            return 0
+        # go right
+        right = find(arr, rows, columns, curr_row, curr_col+1, visited)
+        left = find(arr, rows, columns, curr_row, curr_col-1, visited)
+        # go down
+        up = find(arr, rows, columns, curr_row-1, curr_col, visited)
+        down = find(arr, rows, columns, curr_row+1, curr_col, visited)
+        return left + right + up + down + 1
+    
+    count = 0
+    total_visited = 0
+    for i in range(rows):
+        for j in range(columns):
+            if int(arr[i][j]) != 0 and (i,j) not in visited:
+                find(arr, rows, columns, i, j, visited=visited)
+                count += 1
+        
+    return count
+        
+
 # given an array whose length is always even, split them into all combinations of two groups.
 def two_groups(arr, group_size, index=0, group_one=[], group_two=[]):
     if len(group_one) == group_size and len(group_two) == group_size:
@@ -18,12 +59,6 @@ def two_groups(arr, group_size, index=0, group_one=[], group_two=[]):
         two_groups(arr, index=index+1, group_one=group_one, group_two=group_two, group_size=group_size)
         group_two.pop()
 
-def equals(a, b):
-    if a is not None and b is not None:
-        return a if len(a) == len(b) else None
-    return None
-
-from functools import reduce
 def n_groups(arr, n):
     def n_groups_inner(arr, n, group_size, index=0, groups=[]):
         res = reduce(equals, groups)
@@ -435,7 +470,7 @@ if __name__ == "__main__":
         },
         {
             "name": "divisible_nondivisible_sum_diff",
-            "run": True,
+            "run": False,
             "tests": [
                 {
                     "ar": (10,3)
@@ -462,7 +497,7 @@ if __name__ == "__main__":
         },
         {
             "name": "split_string_with_binary_patterns",
-            "run": True,
+            "run": False,
             "tests": [
                 {
                     "ar": ("123", 1)
@@ -480,13 +515,51 @@ if __name__ == "__main__":
         },
         {
             "name": "n_groups",
-            "run": True,
+            "run": False,
             "tests": [
                 {
                     "ar": ([1,2,3,4], 2)
                 },
                 {
                     "ar": ([1,2,3,4,5,6], 3)
+                }
+            ]
+        },
+        {
+            "name": "island",
+            "run": True,
+            "tests": [
+                {
+                    "kw": {"arr": [[1]]}
+                },
+                {
+                    "kw": {"arr": [[1, 0], [1,1]]}
+                },
+                {
+                    "kw": {"arr": [[1, 0], [0, 1]]}
+                },
+                {
+                    "kw": {"arr": [[1, 1], [1, 1]]}
+                },
+                {
+                    "kw": {"arr": [[1, 0, 1], [1, 0, 1], [1, 0, 1]]}
+                },
+                {
+                    "kw": {"arr": [[1, 1, 1], [0, 0, 0], [1, 1, 1]]}
+                },
+                {
+                    "kw": {"arr": [[1, 1, 1, 1], [0,0,1,0], [0,0,0,0], [1,1,1,1]]}
+                },
+                {
+                    "kw": {"arr": [[1,1,1,1,0],[1,1,0,1,0],[1,1,0,0,0],[0,0,0,0,0]]}
+                },
+                {
+                    "kw": {"arr": [[1,1,1],[0,1,0],[1,1,1]]}
+                },
+                {
+                    "kw": {
+                        "arr": [["1","1","1","1","1","0","1","1","1","1"],["1","0","1","0","1","1","1","1","1","1"],["0","1","1","1","0","1","1","1","1","1"],["1","1","0","1","1","0","0","0","0","1"],["1","0","1","0","1","0","0","1","0","1"],["1","0","0","1","1","1","0","1","0","0"],["0","0","1","0","0","1","1","1","1","0"],["1","0","1","1","1","0","0","1","1","1"],["1","1","1","1","1","1","1","1","0","1"],["1","0","1","1","1","1","1","1","1","0"]]
+                    }
                 }
             ]
         }
