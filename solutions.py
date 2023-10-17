@@ -5,6 +5,132 @@ def equals(a, b):
         return a if len(a) == len(b) else None
     return None
 
+"""
+Given a characters array tasks, representing the tasks a CPU needs to do, where each letter represents a different task. Tasks could be done in any order. Each task is done in one unit of time. For each unit of time, the CPU could complete either one task or just be idle.
+
+However, there is a non-negative integer n that represents the cooldown period between two same tasks (the same letter in the array), that is that there must be at least n units of time between any two same tasks.
+
+Return the least number of units of times that the CPU will take to finish all the given tasks.
+
+
+Example 1:
+
+Input: tasks = ["A","A","A","B","B","B"], n = 2
+Output: 8
+Explanation: 
+A -> B -> idle -> A -> B -> idle -> A -> B
+There is at least 2 units of time between any two same tasks.
+Example 2:
+
+Input: tasks = ["A","A","A","B","B","B"], n = 0
+Output: 6
+Explanation: On this case any permutation of size 6 would work since n = 0.
+["A","A","A","B","B","B"]
+["A","B","A","B","A","B"]
+["B","B","B","A","A","A"]
+...
+And so on.
+Example 3:
+
+Input: tasks = ["A","A","A","A","A","A","B","C","D","E","F","G"], n = 2
+Output: 16
+Explanation: 
+One possible solution is
+A -> B -> C -> A -> D -> E -> A -> F -> G -> A -> idle -> idle -> A -> idle -> idle -> A
+"""
+
+def cpu_min_time(tasks, idle_time):
+    from collections import OrderedDict
+    # sort the tasks by order of max same tasks.
+    # iterate through each task.
+    # check if you can proccess it
+        # peek the task in the queue. it its not eligible for processing
+        # check if current task is eligible, if not
+        # add to queue and mark an idle count
+        # otherwise process the current task
+    
+    sorted_task_group = {}
+    for t in tasks:
+        if t not in sorted_task_group:
+            sorted_task_group[t] = 0
+        sorted_task_group[t] += 1
+    sorted_task_group = OrderedDict(sorted(sorted_task_group.items(), key=lambda x : x[1], reverse=True))
+    print(sorted_task_group)
+
+    # ==============================================
+    sorted_tasks = []
+    for key, value in sorted_task_group.items():
+        sub_tasks = [key]*value
+        sorted_tasks.extend(sub_tasks)
+    print(sorted_tasks)
+
+    #==================================================
+
+    # task_idle_time = {}
+    # for key, value in sorted_task_group:
+    #     task_idle_time[key] = 0
+    # ============================================
+    pointer = 0
+    task_cycle_map = {}
+    TASK_COMPLETED = -1
+    cycle = 0
+    total_tasks = len(sorted_tasks)
+    completed_task_order = []
+    while pointer < total_tasks:
+        print(f"Cycle: {cycle}, tasks {sorted_tasks}", pointer)
+        
+        curr_task = sorted_tasks[pointer]
+        if curr_task == TASK_COMPLETED:
+            # print("Task completed", pointer)
+            pointer += 1
+            continue
+        
+        def process_current_task(tasks, curr_task, pointer, cycle, task_cycle_map, completed_task_order):
+            last_cycle = task_cycle_map.get(curr_task)
+            # print(curr_task, pointer, last_cycle, cycle)
+            processed = False
+            if last_cycle is None or (cycle-last_cycle) > idle_time:
+                completed_task_order.append((tasks[pointer], pointer))
+                task_cycle_map[curr_task] = cycle
+                tasks[pointer] = -1
+                processed = True
+            return processed
+        
+        processed = process_current_task(sorted_tasks, curr_task, pointer, cycle, task_cycle_map, completed_task_order)
+        
+        if processed:
+            cycle += 1
+            pointer += 1
+            continue
+        
+        # print("Not processed. checking if pointer in last -1 ")
+        if pointer == len(sorted_tasks) - 1:
+            cycle += 1
+            continue
+
+        j = pointer + 1
+        processed = False
+        while j < total_tasks:
+            # print("j is", j)
+            if sorted_tasks[j] == TASK_COMPLETED:
+                # print("Task completed", j)
+                j += 1
+                continue
+            
+            processed = process_current_task(sorted_tasks, sorted_tasks[j], j, cycle, task_cycle_map, completed_task_order)
+            # print(".................")
+            # print(j, processed, pointer, cycle, curr_task, sorted_tasks)
+            if processed:
+                cycle += 1
+                break
+            j += 1
+
+        if not processed:
+            cycle += 1
+            completed_task_order.append("IDLE")
+
+    return cycle, completed_task_order
+
 def island(arr):
     visited = {}
     rows = len(arr)
@@ -530,7 +656,7 @@ if __name__ == "__main__":
         },
         {
             "name": "island",
-            "run": True,
+            "run": False,
             "tests": [
                 {
                     "kw": {"arr": [[1]]}
@@ -564,6 +690,13 @@ if __name__ == "__main__":
                         "arr": [["1","1","1","1","1","0","1","1","1","1"],["1","0","1","0","1","1","1","1","1","1"],["0","1","1","1","0","1","1","1","1","1"],["1","1","0","1","1","0","0","0","0","1"],["1","0","1","0","1","0","0","1","0","1"],["1","0","0","1","1","1","0","1","0","0"],["0","0","1","0","0","1","1","1","1","0"],["1","0","1","1","1","0","0","1","1","1"],["1","1","1","1","1","1","1","1","0","1"],["1","0","1","1","1","1","1","1","1","0"]]
                     }
                 }
+            ]
+        },
+        {
+            "name": "cpu_min_time",
+            "run": True,
+            "tests": [
+                {"ar": (["A", "B", "A", "C", "B", "A"], 2)}
             ]
         }
 
