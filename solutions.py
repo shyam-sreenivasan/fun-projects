@@ -1,5 +1,7 @@
 
 from functools import reduce
+from collections import OrderedDict
+import json
 def equals(a, b):
     if a is not None and b is not None:
         return a if len(a) == len(b) else None
@@ -38,17 +40,7 @@ Explanation:
 One possible solution is
 A -> B -> C -> A -> D -> E -> A -> F -> G -> A -> idle -> idle -> A -> idle -> idle -> A
 """
-
-def cpu_min_time(tasks, idle_time):
-    from collections import OrderedDict
-    # sort the tasks by order of max same tasks.
-    # iterate through each task.
-    # check if you can proccess it
-        # peek the task in the queue. it its not eligible for processing
-        # check if current task is eligible, if not
-        # add to queue and mark an idle count
-        # otherwise process the current task
-    
+def sort_tasks_based_on_count(tasks):
     sorted_task_group = {}
     for t in tasks:
         if t not in sorted_task_group:
@@ -62,64 +54,121 @@ def cpu_min_time(tasks, idle_time):
     for key, value in sorted_task_group.items():
         sub_tasks = [key]*value
         sorted_tasks.extend(sub_tasks)
-    print(sorted_tasks)
+    return sorted_tasks
 
-    #==================================================
+def can_process_task(task_cycle_map, curr_task, idle_time, cycle):
+    last_cycle = task_cycle_map.get(curr_task)
+    if last_cycle is None or (cycle-last_cycle) > idle_time:
+        return True
+    return False
+    
+def process_current_task(tasks, idle_time, curr_task, pointer, cycle, task_cycle_map, completed_task_order):
+    processed = False
+    if can_process_task(task_cycle_map, curr_task, idle_time, cycle):
+        completed_task_order.append((tasks[pointer], pointer))
+        task_cycle_map[curr_task] = cycle
+        tasks[pointer] = -1
+        processed = True
+    return processed
 
-    # task_idle_time = {}
-    # for key, value in sorted_task_group:
-    #     task_idle_time[key] = 0
-    # ============================================
+def cpu_min_time_with_queue(tasks, idle_time):
+    tasks = sort_tasks_based_on_count(tasks)
+    pointer = 0
+    task_cycle_map = {}
+    task_queue = []
+    cycle = 0
+    cycle_info = []
+    total_tasks = len(tasks)
+    queue_pointer = 0
+    # print("Sorted tasks", tasks)
+    while not (pointer >= total_tasks and len(task_queue) == 0):
+        # print(
+        #     json.dumps({
+        #         "task_queue": task_queue,
+        #         "pointer": pointer,
+        #         "cycle": cycle,
+        #         "cycle_info": cycle_info,
+        #         "task_cycle_map": task_cycle_map,
+        #         "queue_pointer": queue_pointer
+        #     }, indent=2)
+        # )
+        if len(task_queue) > 0:
+            top_task = task_queue[queue_pointer]
+            if can_process_task(task_cycle_map, top_task, idle_time, cycle):
+                task_queue.pop(queue_pointer)
+                task_cycle_map[top_task] = cycle
+                # print("Processing task from queue", top_task)
+                cycle += 1
+                cycle_info.append(top_task)
+                queue_pointer = 0
+                continue
+            else:
+                # check the entire queue first if anything can be processed
+                queue_pointer += 1
+                if queue_pointer < len(task_queue):
+                    continue
+                else: 
+                    queue_pointer = 0
+
+        # print("Coudn't process task in queue. Checking current task")
+        if pointer < total_tasks:
+            curr_task = tasks[pointer]
+            if can_process_task(task_cycle_map, curr_task, idle_time, cycle):
+                # print("Processing current task", curr_task)
+                task_cycle_map[curr_task] = cycle
+                cycle += 1
+                pointer += 1
+                cycle_info.append(curr_task)
+                continue
+            # print("Appending current task to queue", curr_task)
+            task_queue.append(curr_task)
+            pointer += 1
+        else:
+            cycle += 1
+            cycle_info.append("IDLE")
+    
+    return cycle, cycle_info
+
+
+
+def cpu_min_time(tasks, idle_time):
+    tasks = sort_tasks_based_on_count(tasks)
     pointer = 0
     task_cycle_map = {}
     TASK_COMPLETED = -1
+    IDLE = "I"
     cycle = 0
-    total_tasks = len(sorted_tasks)
+    total_tasks = len(tasks)
     completed_task_order = []
     while pointer < total_tasks:
-        print(f"Cycle: {cycle}, tasks {sorted_tasks}", pointer)
+        # print(f"Cycle: {cycle}, tasks {tasks}", pointer)
         
-        curr_task = sorted_tasks[pointer]
+        curr_task = tasks[pointer]
         if curr_task == TASK_COMPLETED:
             # print("Task completed", pointer)
             pointer += 1
             continue
         
-        def process_current_task(tasks, curr_task, pointer, cycle, task_cycle_map, completed_task_order):
-            last_cycle = task_cycle_map.get(curr_task)
-            # print(curr_task, pointer, last_cycle, cycle)
-            processed = False
-            if last_cycle is None or (cycle-last_cycle) > idle_time:
-                completed_task_order.append((tasks[pointer], pointer))
-                task_cycle_map[curr_task] = cycle
-                tasks[pointer] = -1
-                processed = True
-            return processed
-        
-        processed = process_current_task(sorted_tasks, curr_task, pointer, cycle, task_cycle_map, completed_task_order)
+        processed = process_current_task(tasks, idle_time, curr_task, pointer, cycle, task_cycle_map, completed_task_order)
         
         if processed:
             cycle += 1
             pointer += 1
             continue
         
-        # print("Not processed. checking if pointer in last -1 ")
-        if pointer == len(sorted_tasks) - 1:
+        # not processed. checking if pointer is in last but one element.
+        if pointer == len(tasks) - 1:
             cycle += 1
             continue
 
         j = pointer + 1
         processed = False
         while j < total_tasks:
-            # print("j is", j)
-            if sorted_tasks[j] == TASK_COMPLETED:
-                # print("Task completed", j)
+            if tasks[j] == TASK_COMPLETED:
                 j += 1
                 continue
             
-            processed = process_current_task(sorted_tasks, sorted_tasks[j], j, cycle, task_cycle_map, completed_task_order)
-            # print(".................")
-            # print(j, processed, pointer, cycle, curr_task, sorted_tasks)
+            processed = process_current_task(tasks, idle_time, tasks[j], j, cycle, task_cycle_map, completed_task_order)
             if processed:
                 cycle += 1
                 break
@@ -127,7 +176,7 @@ def cpu_min_time(tasks, idle_time):
 
         if not processed:
             cycle += 1
-            completed_task_order.append("IDLE")
+            completed_task_order.append(IDLE)
 
     return cycle, completed_task_order
 
