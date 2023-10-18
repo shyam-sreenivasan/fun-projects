@@ -1,4 +1,3 @@
-
 from functools import reduce
 from collections import OrderedDict
 import json
@@ -6,6 +5,71 @@ def equals(a, b):
     if a is not None and b is not None:
         return a if len(a) == len(b) else None
     return None
+
+# Given n non-negative integers representing an elevation map where the width of each bar is 1, compute how much water it can trap after raining.
+# Example 1
+# Input: height = [0,1,0,2,1,0,1,3,2,1,2,1]
+# Output: 6
+# Explanation: The above elevation map (black section) is represented by array [0,1,0,2,1,0,1,3,2,1,2,1]. In this case, 6 units of rain water (blue section) are being trapped.
+
+# Example 2:
+# Input: height = [4,2,0,3,2,5]
+# Output: 9
+def water_collected(arr):
+    # detect the first pillar and the last pillar, water needs to be collected within that
+    # detect a valley. (Both left and right pillars should be greater.)
+    # when detecting the left and the right boundry, subtract pillar area.
+
+    # given the left boundary, this function detects right boundary and all the block area
+    # with that
+    def detect_right_boundary_and_water_area(left_boundary):
+        curr = left_boundary + 1
+        block_area = 0
+        while arr[curr] >= arr[left_boundary]:
+            left_boundary = arr[curr]
+            curr += 1
+
+        print("Detecting left boundary", left_boundary)
+        prev = curr - 1
+        while arr[curr] <= arr[prev]:
+            block_area += arr[curr]
+            prev = curr
+            curr = curr + 1
+
+        while curr <= len(arr) - 2 and arr[curr] < arr[left_boundary]:
+            block_area += arr[curr]
+            curr = curr + 1
+        right_boundary = curr
+        print("Detected right boundary", right_boundary)
+
+        total_area = min(arr[left_boundary], arr[right_boundary]) * (right_boundary - left_boundary  - 1)
+        water_area =  total_area - block_area
+        return right_boundary, water_area
+    
+    # ===============================================================
+    first_pillar = None
+    i = 0
+    # detect the starting point
+    while first_pillar is None and i < len(arr):
+        print(i, first_pillar)
+        if arr[i] != 0:
+            first_pillar = i
+        i += 1
+        
+    if first_pillar is None:
+        return 0
+
+    print(f"First pillar. index={first_pillar} value={arr[first_pillar]}")    
+    water_area = 0
+    left_boundary = first_pillar
+    while True:
+        rb, wa = detect_right_boundary_and_water_area(left_boundary)
+        water_area += wa
+        if rb >= len(arr) - 1:
+            break 
+        left_boundary = rb
+
+    return water_area
 
 """
 Given a characters array tasks, representing the tasks a CPU needs to do, where each letter represents a different task. Tasks could be done in any order. Each task is done in one unit of time. For each unit of time, the CPU could complete either one task or just be idle.
