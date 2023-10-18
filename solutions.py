@@ -104,6 +104,42 @@ Explanation:
 One possible solution is
 A -> B -> C -> A -> D -> E -> A -> F -> G -> A -> idle -> idle -> A -> idle -> idle -> A
 """
+
+def pick_tasks_in_descending_group_order(tasks, pick_at_most=2):
+    sorted_task_group = {}
+    for t in tasks:
+        if t not in sorted_task_group:
+            sorted_task_group[t] = 0
+        sorted_task_group[t] += 1
+    
+    executed_tasks = []
+    
+    while True:
+        sorted_task_group = OrderedDict(sorted(sorted_task_group.items(), key=lambda x : x[1], reverse=True))
+        sorted_task_group = OrderedDict({k:v for k, v in sorted_task_group.items() if v != 0})
+        group_keys = list(sorted_task_group.keys())
+        if len(group_keys) == 0:
+            break
+        print(sorted_task_group)
+
+        leading_task_group = group_keys[0]
+        leading_task_count = sorted_task_group[leading_task_group]
+
+        if leading_task_count == 0:
+            break
+        items_picked = 0
+        for group in group_keys:
+            if items_picked == pick_at_most:
+                break
+            executed_tasks.append(group)
+            sorted_task_group[group] -= 1
+            items_picked += 1
+        print(executed_tasks)
+
+    return executed_tasks
+
+
+
 def sort_tasks_based_on_count(tasks):
     sorted_task_group = {}
     for t in tasks:
@@ -118,7 +154,7 @@ def sort_tasks_based_on_count(tasks):
     for key, value in sorted_task_group.items():
         sub_tasks = [key]*value
         sorted_tasks.extend(sub_tasks)
-    return sorted_tasks
+    return sorted_tasks, sorted_task_group
 
 def can_process_task(task_cycle_map, curr_task, idle_time, cycle):
     last_cycle = task_cycle_map.get(curr_task)
@@ -136,7 +172,7 @@ def process_current_task(tasks, idle_time, curr_task, pointer, cycle, task_cycle
     return processed
 
 def cpu_min_time_with_queue(tasks, idle_time):
-    tasks = sort_tasks_based_on_count(tasks)
+    tasks, task_group = sort_tasks_based_on_count(tasks)
     pointer = 0
     task_cycle_map = {}
     task_queue = []
@@ -194,9 +230,39 @@ def cpu_min_time_with_queue(tasks, idle_time):
     return cycle, cycle_info
 
 
+def cpu_min_time_new(tasks, idle_time):
+    tasks, task_group = sort_tasks_based_on_count(tasks)
+    task_execution = []
+    task_cycle_map = {}
+    print("---------------------------------------------")
+    counter = 0
+    while len(task_group) > 0:
+        finished_groups = []
+        for group, count in task_group.items():
+            curr_cycle = len(task_execution)
+            last_cycle = task_cycle_map.get(group)
+            # print(group, curr_cycle, last_cycle, task_execution, task_cycle_map)
+            
+            if last_cycle is not None and (curr_cycle - last_cycle) <= idle_time:
+                task_execution.append('IDLE')
+                break
+
+            task_cycle_map[group] = curr_cycle
+            task_execution.append(group)
+            task_group[group] -= 1
+            if task_group[group] == 0:
+                finished_groups.append(group)
+        for grp in finished_groups:
+            task_group.pop(grp)
+        
+        counter += 1
+
+    print(task_group, task_execution, task_cycle_map)
+    return len(task_execution)
+        
 
 def cpu_min_time(tasks, idle_time):
-    tasks = sort_tasks_based_on_count(tasks)
+    tasks, task_group = sort_tasks_based_on_count(tasks)
     pointer = 0
     task_cycle_map = {}
     TASK_COMPLETED = -1
