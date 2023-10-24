@@ -1,6 +1,8 @@
 from functools import reduce
 from collections import OrderedDict
 import json
+import heapq
+
 def equals(a, b):
     if a is not None and b is not None:
         return a if len(a) == len(b) else None
@@ -105,6 +107,42 @@ One possible solution is
 A -> B -> C -> A -> D -> E -> A -> F -> G -> A -> idle -> idle -> A -> idle -> idle -> A
 """
 
+def cpu_min_time_heap(tasks, idle_time):
+    task_group = {}
+    for t in tasks:
+        if t not in task_group:
+            task_group[t] = 0
+        task_group[t] += 1
+    
+    task_group = [(-count, key) for key, count in task_group.items()]
+    heapq.heapify(task_group)
+    picked_items = []
+    total_picks = idle_time + 1
+    while len(task_group) > 0:
+        i = 0
+        items_to_push_back = []
+        while i < total_picks:
+            if len(task_group) == 0:
+                if len(items_to_push_back) > 0:
+                    picked_items.append('IDLE')
+                else:
+                    break
+            else:
+                count, task = heapq.heappop(task_group)
+                count = -count
+                # print(f"Task: {task}, count: {count}")
+                picked_items.append(task)
+                new_item = (-(count-1), task)
+                if new_item[0] != 0:
+                    items_to_push_back.append(new_item)
+            i += 1
+        # print(f"Items picked: {picked_items}")
+        # put back the items in the heap if count not 0
+        for item in items_to_push_back:
+            heapq.heappush(task_group, item)
+
+    return len(picked_items)
+
 def pick_tasks_in_descending_group_order(tasks, pick_at_most=2):
     sorted_task_group = {}
     for t in tasks:
@@ -136,7 +174,7 @@ def pick_tasks_in_descending_group_order(tasks, pick_at_most=2):
             items_picked += 1
         print(executed_tasks)
 
-    return executed_tasks
+    return len(executed_tasks), executed_tasks
 
 
 

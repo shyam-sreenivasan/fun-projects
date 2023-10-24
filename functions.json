@@ -252,8 +252,8 @@
         ]
     },
     {
-        "name": "cpu_min_time_new",
-        "run": false,
+        "name": "cpu_min_time_heap",
+        "run": true,
         "tests": [
             {"ar": [["A", "B", "A", "C", "B", "A"], 2]},
             {"ar": [["A", "A", "A", "B"], 2]},
@@ -265,7 +265,7 @@
     },
     {
         "name": "pick_tasks_in_descending_group_order",
-        "run": true,
+        "run": false,
         "tests": [
             {"ar": [["A", "B", "A", "C", "B", "A"], 2]},
             {"ar": [["A", "A", "A", "B"], 2]},
