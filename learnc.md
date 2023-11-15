@@ -220,3 +220,38 @@ void clearline(char line[], int len) {
 	}
 }
 ```
+
+### Find the max integer in a signed array
+```c
+#include <stdio.h>
+
+int main(int argc, char const *argv[])
+{
+	int arr[] = {1,-4,2,6,5};
+	int max = arr[0];
+
+	for(int i=1; arr[i] != '\0' ; i++) {
+		if(arr[i] > max) {
+			max = arr[i];
+		}
+		
+	}
+	printf("Max value is %d\n", max);
+	return 0;
+}
+```
+
+### Use extern keyword to represent a global variable access.
+```c
+#include <stdio.h>
+int test = 25;
+
+int main(int argc, char const *argv[])
+{
+	extern int test;
+	printf("Test value before %d\n",test);
+	test = 10;
+	printf("Test value after %d\n",test);	
+	return 0;
+}
+```
