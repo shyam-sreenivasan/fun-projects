@@ -1,10 +1,18 @@
 #include <stdio.h>
-int test = 25;
+#include <stdlib.h>
+#include <pthread.h>
+
+int x = 0;
+
+void hello() {
+	printf("Hello is a function pointer");
+}
+
+void hello_wrapper(void (*f)()) {
+	f();
+}
+
 int main(int argc, char const *argv[])
 {
-	extern int test;
-	printf("Test value before %d\n",test);
-	test = 10;
-	printf("Test value after %d\n",test);	
-
-}
+	hello_wrapper(hello);
+}  

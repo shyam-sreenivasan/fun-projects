@@ -255,3 +255,22 @@ int main(int argc, char const *argv[])
 	return 0;
 }
 ```
+
+### Passing function as an argument to another function
+```c
+#include <stdio.h>
+
+void hello() {
+	printf("Hello is a function pointer");
+}
+
+void hello_wrapper(void (*f)()) {
+	f();
+}
+
+int main(int argc, char const *argv[])
+{
+	hello_wrapper(hello);
+}  
+```
+
