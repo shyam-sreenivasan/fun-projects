@@ -12,6 +12,19 @@ int main(int argc, char const *argv[])
 }
 ```
 
+### Check assembly code of simple counter program
+ > run `objdump -d learn` after compiling the code using `gcc learnc.c -o learn`
+ ```c
+ #include <stdio.h>
+
+int main(int argc, char const *argv[])
+{
+	int counter = 0;
+	counter += 1;
+	printf("%d\n", counter);
+}  
+ ```
+
 ### Celsius to Fahrenheit
 ```c
 #include <stdio.h>

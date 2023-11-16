@@ -97,6 +97,19 @@ y++ looks like a simple instruction but it has 3 steps.
 2. Increment the value 
 3. Store the value in the corresponding memory
 
+### Check assembly code of simple counter program
+ > run `objdump -d learn` after compiling the code using `gcc learnc.c -o learn`
+ ```c
+ #include <stdio.h>
+
+int main(int argc, char const *argv[])
+{
+	int counter = 0;
+	counter += 1;
+	printf("%d\n", counter);
+}  
+ ```
+
 Now imagine a timer interrupt goes off after the first intruction.
 The thread state along with whatever is there in its stack and registers are saved.
 
