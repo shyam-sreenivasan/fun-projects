@@ -100,7 +100,7 @@ y++ looks like a simple instruction but it has 3 steps.
 ### Check assembly code of simple counter program
  > run `objdump -d learn` after compiling the code using `gcc learnc.c -o learn`
  ```c
- #include <stdio.h>
+#include <stdio.h>
 
 int main(int argc, char const *argv[])
 {
@@ -109,7 +109,14 @@ int main(int argc, char const *argv[])
 	printf("%d\n", counter);
 }  
  ```
+```asm
 
+addl $0x1, -0x4(%rbp): Increment the local variable by 1.
+
+mov -0x4(%rbp), %eax: Move the value of the local variable to the %eax register.
+
+mov %eax, %esi: Move the value in %eax to the source index register %esi.
+```
 Now imagine a timer interrupt goes off after the first intruction.
 The thread state along with whatever is there in its stack and registers are saved.
 
@@ -132,6 +139,7 @@ So what do we need here ?
 - also when a transaction occurs, we want it to be the only one modifying the shared data
 
 atomicity is one kind of issue.
+
 But there is another one. Sometimes processes or threads are put to sleep when waiting for some kind of I/O. when the I/O happens, how to wake this processes from sleep to process the data.
 
 There are 2 keys ideas here. One is lock and the other is condition variables, as a form of signaling between threads or processes.
@@ -151,4 +159,51 @@ a brief idea about locks and condition variables.
 
 Why not use a simple flag.
  - performs poorly wasting cpu cycles
- - it leads to lot of unforseen bugs. 
+ - it leads to lot of unforseen bugs.
+
+Lock implementation
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+
+#define ITERATIONS 1e6
+int x = 0;
+pthread_mutex_t mutex;  // Declare a mutex
+
+void *incrementer(void* arg) {
+    char *thread_name = (char*) arg;
+    int y = 0;
+
+    for (int i = 0; i < ITERATIONS; i++) {
+        // Lock the mutex before accessing the shared variable
+        pthread_mutex_lock(&mutex);
+        x++;
+        y++;
+        // Unlock the mutex after updating the shared variable
+        pthread_mutex_unlock(&mutex);
+    }
+
+    printf("%s, x= %d, y= %d\n", thread_name, x, y);
+}
+
+int main(int argc, char const *argv[]) {
+    pthread_t p1, p2;
+
+    // Initialize the mutex
+    pthread_mutex_init(&mutex, NULL);
+
+    printf("Main: begin\n");
+    pthread_create(&p1, NULL, incrementer, "ThreadA");
+    pthread_create(&p2, NULL, incrementer, "ThreadB");
+
+    pthread_join(p1, NULL);
+    pthread_join(p2, NULL);
+
+    // Destroy the mutex
+    pthread_mutex_destroy(&mutex);
+
+    printf("Final value of x: %d\n", x);
+    printf("Main: end\n");
+}
+```
