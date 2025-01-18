@@ -7,6 +7,7 @@ BOLD_UNICODE_MAP.update({chr(i): chr(0x1D41A + i - ord('a')) for i in range(ord(
 
 ITALIC_UNICODE_MAP = {chr(i): chr(0x1D434 + i - ord('A')) for i in range(ord('A'), ord('Z') + 1)}
 ITALIC_UNICODE_MAP.update({chr(i): chr(0x1D44E + i - ord('a')) for i in range(ord('a'), ord('z') + 1)})
+ITALIC_UNICODE_MAP.update({'h': chr(0x210F)})
 
 MONOSPACE_UNICODE_MAP = {chr(i): chr(0x1D670 + i - ord('A')) for i in range(ord('A'), ord('Z') + 1)}
 MONOSPACE_UNICODE_MAP.update({chr(i): chr(0x1D68A + i - ord('a')) for i in range(ord('a'), ord('z') + 1)})
