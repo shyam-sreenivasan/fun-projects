@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Trim Audio/Video</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script>
+    function addRangeField() {
+      const container = document.getElementById('ranges');
+      const group = document.createElement('div');
+      group.className = 'row mb-2';
+      group.innerHTML = `
+        <div class="col">
+          <input type="text" name="start_times" class="form-control" placeholder="Start Time (HH:MM:SS)" required>
+        </div>
+        <div class="col">
+          <input type="text" name="end_times" class="form-control" placeholder="End Time (HH:MM:SS)" required>
+        </div>
+        <div class="col-auto">
+          <button type="button" class="btn btn-danger" onclick="this.parentElement.parentElement.remove()">Remove</button>
+        </div>
+      `;
+      container.appendChild(group);
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      const form = document.getElementById('trimForm');
+      const formData = new FormData(form);
+
+      const status = document.getElementById('status');
+      const results = document.getElementById('results');
+      results.innerHTML = "";
+      status.textContent = "Processing... Please wait.";
+
+      try {
+        const response = await fetch("/trim-media", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          status.textContent = "Success!";
+          results.innerHTML = `
+            <div class="alert alert-success">
+              <strong>Trimmed file:</strong>
+              <a href="/list_files" class="btn btn-sm btn-primary" target="_blank">Go to List Files to download ${data.filename}</a>
+              <small class="text-muted d-block mt-2">Note: File may take a few seconds to become available.Check in file list</small>
+            </div>`;
+        } else {
+          status.textContent = "Error!";
+          results.innerHTML = `<div class="alert alert-danger">${data.error || "Failed to process the file."}</div>`;
+        }
+      } catch (err) {
+        console.error(err);
+        status.textContent = "Error!";
+        results.innerHTML = `<div class="alert alert-danger">Unexpected error occurred.</div>`;
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("trimForm").addEventListener("submit", handleSubmit);
+      addRangeField(); // Add initial field
+    });
+  </script>
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <h2 class="text-center mb-4">Trim Audio/Video File</h2>
+    <form id="trimForm" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label for="file" class="form-label">Upload Media File</label>
+        <input class="form-control" type="file" name="media_file" id="file" accept="audio/*,video/*" required>
+      </div>
+
+      <h5>Trim Ranges</h5>
+      <div id="ranges"></div>
+      <button type="button" class="btn btn-outline-primary mb-3" onclick="addRangeField()">+ Add Time Range</button>
+
+      <div class="d-grid mb-2">
+        <button type="submit" class="btn btn-success">Trim</button>
+      </div>
+    </form>
+
+    <div id="status" class="text-center fw-bold text-secondary mb-2"></div>
+    <div id="results" class="text-center"></div>
+
+    <div class="text-center mt-4">
+      <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+  </div>
+</body>
+</html>
