@@ -1,0 +1,1 @@
+cd $TOOLS_APP && source py3/bin/activate && python main.py

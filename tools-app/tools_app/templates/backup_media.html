@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Backup iPhone Media</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+
+    .dropzone {
+      border: 2px dashed #6c757d;
+      border-radius: 10px;
+      padding: 60px 20px;
+      text-align: center;
+      color: #6c757d;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .dropzone:hover, .dropzone.dragover {
+      background-color: #e9ecef;
+    }
+
+    .dropzone i {
+      font-size: 3rem;
+    }
+
+    .file-entry {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 10px 15px;
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      cursor: move;
+    }
+
+    .file-entry.dragging {
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <h2 class="text-center mb-4">Backup iPhone Media</h2>
+
+    <form id="mediaForm">
+      <div class="dropzone mb-4" id="dropArea">
+        <i class="bi bi-plus-circle"></i>
+        <p class="mt-2 mb-0">Click or drag media files here to upload</p>
+        <input type="file" id="mediaInput" accept="image/*,audio/*,video/*" multiple hidden>
+      </div>
+
+      <div id="fileList" class="mb-3"></div>
+
+      <div class="text-center">
+        <button type="submit" class="btn btn-primary mt-3">Backup Media</button>
+        <button type="button" class="btn btn-secondary mt-3" onclick="clearAll()">Clear All</button>
+        <a href="/" class="btn btn-outline-dark mt-3">Back to Dashboard</a>
+      </div>
+    </form>
+
+    <div id="response" class="mt-4 text-center"></div>
+  </div>
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+
+  <!-- SortableJS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+  <script>
+    const dropArea = document.getElementById('dropArea');
+    const mediaInput = document.getElementById('mediaInput');
+    const fileListContainer = document.getElementById('fileList');
+    let selectedFiles = [];
+
+    // Open file dialog on dropzone click
+    dropArea.addEventListener('click', () => mediaInput.click());
+
+    // Handle file input change
+    mediaInput.addEventListener('change', () => {
+      Array.from(mediaInput.files).forEach(file => {
+        if (!selectedFiles.find(f => f.name === file.name)) {
+          selectedFiles.push(file);
+        }
+      });
+      updateFileList();
+      mediaInput.value = ''; // Clear input
+    });
+
+    // Drag and Drop handlers
+    dropArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropArea.classList.add('dragover');
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+      dropArea.classList.remove('dragover');
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropArea.classList.remove('dragover');
+
+      Array.from(e.dataTransfer.files).forEach(file => {
+        if (!selectedFiles.find(f => f.name === file.name)) {
+          selectedFiles.push(file);
+        }
+      });
+      updateFileList();
+    });
+
+    // Update file list display
+    function updateFileList() {
+      fileListContainer.innerHTML = '';
+      selectedFiles.forEach((file, index) => {
+        const entry = document.createElement('div');
+        entry.className = 'file-entry';
+        entry.setAttribute('data-index', index);
+        entry.innerHTML = `
+          <span>${file.name}</span>
+          <button type="button" class="btn btn-sm btn-danger" onclick="removeFile(${index})">Remove</button>
+        `;
+        fileListContainer.appendChild(entry);
+      });
+      setupSortable();
+    }
+
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      updateFileList();
+    }
+
+    // Enable drag-and-drop sorting
+    function setupSortable() {
+      Sortable.create(fileListContainer, {
+        animation: 150,
+        onEnd: () => {
+          const reordered = [];
+          document.querySelectorAll('.file-entry').forEach(entry => {
+            const index = parseInt(entry.getAttribute('data-index'));
+            reordered.push(selectedFiles[index]);
+          });
+          selectedFiles = reordered;
+          updateFileList(); // Re-render with correct index values
+        }
+      });
+    }
+
+    // Handle form submit
+    document.getElementById('mediaForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (selectedFiles.length === 0) {
+        alert("Please select at least one media file.");
+        return;
+      }
+
+      const formData = new FormData();
+      selectedFiles.forEach(file => formData.append('media', file));
+
+      fetch('/backup-media', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        const resDiv = document.getElementById('response');
+        if (data.success) {
+          resDiv.innerHTML = `
+            <div class="alert alert-success">
+              Backup complete!<br>
+              <a href="/files?folder=${encodeURIComponent(data.uploaded_to)}" class="btn btn-success mt-2" download>
+                Download All Media
+              </a>
+            </div>
+          `;
+        } else {
+          resDiv.innerHTML = `<div class="alert alert-warning">Unexpected server response.</div>`;
+        }
+      })
+      .catch(error => {
+        document.getElementById('response').innerHTML =
+          `<div class="alert alert-danger">Error: ${error.message}</div>`;
+      });
+    });
+
+    function clearAll() {
+      selectedFiles = [];
+      updateFileList();
+      document.getElementById('response').innerHTML = '';
+    }
+  </script>
+</body>
+</html>

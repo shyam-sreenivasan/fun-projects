@@ -3,7 +3,7 @@ from flask import render_template, jsonify, request, flash, url_for, redirect
 from hashlib import sha256
 from tools_app.tools.crypt import encrypt_string, decrypt_string
 from tools_app.tools.mergepdfs import merge_pdfs
-from tools_app import UPLOAD_FOLDER
+from tools_app import UPLOAD_FOLDER, MEDIA_BACKUP_PATH
 import time
 import os
 from flask import send_from_directory
@@ -14,6 +14,8 @@ from tools_app.tools.youtube.downloader import run_download_youtube
 from tools_app.tools.image_util import convert_images_to_pdf
 from moviepy import VideoFileClip, AudioFileClip, concatenate_videoclips, concatenate_audioclips # type: ignore
 import mimetypes
+import calendar
+from werkzeug.utils import secure_filename
 
 @app.route("/", methods=["GET"])
 def home():
@@ -252,3 +254,39 @@ def trim_media():
         })
 
     return render_template("trim_media.html")
+
+@app.route('/backup-media', methods=['GET'])
+def backup_media_form():
+    return render_template('backup_media.html')
+
+@app.route('/backup-media', methods=['POST'])
+def backup_media():
+    files = request.files.getlist('media')
+    subfolder = request.form.get('subfolder', '').strip()
+
+    if not files or not any(file.filename for file in files):
+        return jsonify({"success": False, "message": "No files provided."}), 400
+
+    # If no subfolder is provided, generate one based on the current month and year
+    if not subfolder:
+        now = datetime.now()
+        subfolder = f"{calendar.month_name[now.month]}-{now.year}"
+
+    # Create a folder for the files under the backup path
+    upload_path = os.path.join(MEDIA_BACKUP_PATH, secure_filename(subfolder))
+    os.makedirs(upload_path, exist_ok=True)
+
+    saved_files = []
+    for file in files:
+        if file and file.filename:
+            filename = secure_filename(file.filename)
+            dest = os.path.join(upload_path, filename)
+            file.save(dest)
+            saved_files.append(filename)
+
+    return jsonify({
+        "success": True,
+        "message": f"{len(saved_files)} file(s) uploaded successfully to: {upload_path}",
+        "uploaded_to": upload_path,
+        "files": saved_files
+    })
