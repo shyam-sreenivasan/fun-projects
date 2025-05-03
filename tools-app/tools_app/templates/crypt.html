@@ -44,7 +44,7 @@
 
       <div class="mb-3">
         <label for="key" class="form-label">Enter the key</label>
-        <input type="password" class="form-control" id="key" placeholder="Key goes here" required />
+        <input type="password" class="form-control" id="key" placeholder="Key goes here" required autocomplete="off"/>
       </div>
 
       <div class="mb-3">
@@ -109,6 +109,10 @@
       document.getElementById('cryptoForm').reset();
       document.getElementById('response').classList.add('d-none');
     }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    clearForm();
+  });
 
     function copyToClipboard() {
       const text = document.getElementById('resultText').textContent;

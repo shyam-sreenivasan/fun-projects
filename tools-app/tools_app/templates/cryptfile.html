@@ -58,6 +58,9 @@
       document.getElementById("output").value = "";
       document.getElementById("status").textContent = "";
     }
+  window.addEventListener("DOMContentLoaded", () => {
+    clearForm();
+  });
   </script>
 </head>
 <body class="bg-light">
@@ -71,7 +74,7 @@
 
       <div class="mb-3">
         <label for="key" class="form-label">Encryption Key</label>
-        <input type="text" id="key" name="key" class="form-control" required>
+        <input type="text" id="key" name="key" class="form-control" required autocomplete="off">
       </div>
 
       <div class="mb-3">
