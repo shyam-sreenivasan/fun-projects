@@ -1,5 +1,6 @@
+from io import BytesIO
 from tools_app.app import app
-from flask import render_template, jsonify, request, flash, url_for, redirect
+from flask import render_template, jsonify, request, flash, send_file, url_for, redirect
 from hashlib import sha256
 from tools_app.tools.crypt import encrypt_string, decrypt_string
 from tools_app.tools.mergepdfs import merge_pdfs
@@ -284,3 +285,30 @@ def backup_media():
         "uploaded_to": upload_path,
         "files": saved_files
     })
+
+@app.route('/cryptfile', methods=['POST'])
+def crypt_file():
+    file = request.files.get('file')
+    key = request.form.get('key')
+    mode = request.form.get('mode')  # "encrypt" or "decrypt"
+
+    if not file or not key or mode not in ('encrypt', 'decrypt'):
+        return jsonify({'error': 'Invalid input'}), 400
+
+    try:
+        key_bytes = key.encode('utf-8')[:32].ljust(32, b'\0')  # pad/truncate to 32 bytes
+        content = file.read().decode('utf-8')
+
+        if mode == 'encrypt':
+            result = encrypt_string(key_bytes, content)
+        else:
+            result = decrypt_string(key_bytes, content)
+
+        return jsonify({'output': result})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route("/cryptfile", methods=['GET'])
+def cryptfilepage():
+    return render_template("cryptfile.html")
