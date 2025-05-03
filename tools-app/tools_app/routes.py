@@ -12,10 +12,10 @@ import uuid
 import threading
 from tools_app.tools.youtube.downloader import run_download_youtube
 from tools_app.tools.image_util import convert_images_to_pdf
-from moviepy import VideoFileClip, AudioFileClip, concatenate_videoclips, concatenate_audioclips # type: ignore
 import mimetypes
 import calendar
 from werkzeug.utils import secure_filename
+from tools_app.tools.trim_media import *
 
 @app.route("/", methods=["GET"])
 def home():
@@ -118,35 +118,64 @@ def list_files():
     file_list.sort(key=lambda x: x["modified"], reverse=True)
     return render_template('list_files.html', files=file_list)
 
+
 @app.route('/download_youtube', methods=['POST'])
 def download_youtube():
     data = request.json
     url = data.get('url')
-    mode = data.get('mode')  # audio, video, or both
-
+    mode = data.get('mode')  # 'audio', 'video', or 'both'
+    start_times = data.get('start_times', [])
+    end_times = data.get('end_times', [])
+    print("start times", start_times)
+    print("end times", end_times)
     if not url or mode not in ['audio', 'video', 'both']:
         return jsonify({'error': 'Invalid input'}), 400
 
     job_id = str(uuid.uuid4())
     base_name = f"{job_id}"
 
-    thread = threading.Thread(target=run_download_youtube, args=(UPLOAD_FOLDER, url, mode, base_name))
-    thread.start()
+    def background_job():
+        try:
+            run_download_youtube(UPLOAD_FOLDER, url, mode, base_name)
 
-    # Construct expected file names
+            # Perform trimming if valid ranges provided
+            if start_times and end_times and len(start_times) == len(end_times):
+                if mode == 'audio':
+                    input_file = os.path.join(UPLOAD_FOLDER, f"{base_name}_audio.mp3")
+                else:
+                    input_file = os.path.join(UPLOAD_FOLDER, f"{base_name}.mp4")
+
+                trim_output = trim_media_file(input_file, start_times, end_times, UPLOAD_FOLDER)
+                if trim_output:
+                    print(f"[INFO] Trimmed media saved at: {trim_output}")
+                else:
+                    print("[WARN] Trimming failed or was skipped.")
+        except Exception as e:
+            print(f"[ERROR] Background task failed: {e}")
+
+    threading.Thread(target=background_job).start()
+
+    # Predict trimmed file name (used by client to poll)
     result_files = []
-    if mode in ['video', 'both']:
-        result_files.append(f"{base_name}.mp4")  # mp4 for video
-    if mode in ['audio', 'both']:
-        result_files.append(f"{base_name}_audio.mp3")
+    if start_times and end_times:
+        if mode == 'audio':
+            trimmed_file = f"trimmed_{base_name}.mp3"
+        else:
+            trimmed_file = f"trimmed_{base_name}.mp4"
+        result_files.append(trimmed_file)
+    else:
+        if mode in ['video', 'both']:
+            result_files.append(f"{base_name}.mp4")
+        if mode in ['audio', 'both']:
+            result_files.append(f"{base_name}_audio.mp3")
 
-    # Construct URLs
-    file_urls = [f"/files?filename={name}" for name in result_files]
+    file_urls = [f"/files?filename={f}" for f in result_files]
 
     return jsonify({
         "message": "Download started",
         "files": file_urls
     })
+
 
 @app.route("/ytdownload", methods=['GET'])
 def get_ytdownloader_page():
@@ -192,68 +221,33 @@ def delete_file():
 
     return redirect(url_for('list_files'))
 
-def parse_time_to_seconds(time_str):
-    """Convert HH:MM:SS to seconds."""
-    parts = list(map(int, time_str.strip().split(":")))
-    while len(parts) < 3:
-        parts.insert(0, 0)  # pad to HH:MM:SS
-    h, m, s = parts
-    return h * 3600 + m * 60 + s
-
-@app.route('/trim-media', methods=['GET', 'POST'])
+@app.route('/trim-media', methods=['POST', 'GET'])
 def trim_media():
-    if request.method == "POST":
-        file = request.files.get('media_file')
-        start_times = request.form.getlist('start_times')
-        end_times = request.form.getlist('end_times')
+    if request.method == 'GET':
+        return render_template("trim_media.html")
 
-        if not file or not start_times or not end_times or len(start_times) != len(end_times):
-            return jsonify({"error": "Invalid input. Provide a file and matching start/end times."}), 400
+    file = request.files.get('media_file')
+    start_times = request.form.getlist('start_times')
+    end_times = request.form.getlist('end_times')
 
-        original_filename = file.filename
-        ext = os.path.splitext(original_filename)[1]
-        input_filename = f"{uuid.uuid4().hex}{ext}"
-        input_path = os.path.join(UPLOAD_FOLDER, input_filename)
-        file.save(input_path)
+    if not file or not start_times or not end_times or len(start_times) != len(end_times):
+        return jsonify({"error": "Invalid input. Provide a file and matching start/end times."}), 400
 
-        mime_type, _ = mimetypes.guess_type(input_path)
-        is_audio = mime_type and mime_type.startswith('audio')
+    ext = os.path.splitext(file.filename)[1]
+    input_path = os.path.join(UPLOAD_FOLDER, f"{uuid.uuid4().hex}{ext}")
+    file.save(input_path)
 
-        start_seconds = [parse_time_to_seconds(t) for t in start_times]
-        end_seconds = [parse_time_to_seconds(t) for t in end_times]
+    output_path = trim_media_file(input_path, start_times, end_times, UPLOAD_FOLDER)
 
-        output_ext = '.mp3' if is_audio else '.mp4'
-        output_filename = f"trimmed_{uuid.uuid4().hex}{output_ext}"
-        output_path = os.path.join(UPLOAD_FOLDER, output_filename)
+    if not output_path:
+        return jsonify({"error": "Trimming failed."}), 500
 
-        def trim_task():
-            try:
-                if is_audio:
-                    clip = AudioFileClip(input_path)
-                    segments = [clip.subclipped(s, e) for s, e in zip(start_seconds, end_seconds)]
-                    final_clip = concatenate_audioclips(segments)
-                    final_clip.write_audiofile(output_path)
-                else:
-                    clip = VideoFileClip(input_path)
-                    segments = [clip.subclipped(s, e) for s, e in zip(start_seconds, end_seconds)]
-                    final_clip = concatenate_videoclips(segments)
-                    final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac")
+    return jsonify({
+        "message": "Trimming successful.",
+        "download_url": url_for('download_merged_pdf', filename=os.path.basename(output_path)),
+        "filename": os.path.basename(output_path)
+    })
 
-                clip.close()
-                final_clip.close()
-
-            except Exception as e:
-                print(f"[ERROR] Background trim task failed: {e}")
-
-        threading.Thread(target=trim_task, daemon=True).start()
-
-        return jsonify({
-            "message": "Trimming started.",
-            "download_url": url_for('download_merged_pdf', filename=output_filename),
-            "filename": output_filename
-        })
-
-    return render_template("trim_media.html")
 
 @app.route('/backup-media', methods=['GET'])
 def backup_media_form():
