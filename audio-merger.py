@@ -32,4 +32,4 @@ def merge_audios_in_folder(input_folder, output_path="merged_audio.mp3"):
 
 # Example usage:
 if __name__ == "__main__":
-    merge_audios_in_folder("c:\\Users\shyam\\Desktop\\kidambi-slokas", "merged_output.mp3")
+    merge_audios_in_folder("/home/shyam/Downloads/kidambi-slokas", "merged_output.mp3")
